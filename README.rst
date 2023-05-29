@@ -1,13 +1,11 @@
 ========
-liwcifer
+LIWCifer
 ========
 
 
 .. image:: https://img.shields.io/pypi/v/liwcifer.svg
         :target: https://pypi.python.org/pypi/liwcifer
 
-.. image:: https://img.shields.io/travis/hide-ous/liwcifer.svg
-        :target: https://travis-ci.com/hide-ous/liwcifer
 
 .. image:: https://readthedocs.org/projects/liwcifer/badge/?version=latest
         :target: https://liwcifer.readthedocs.io/en/latest/?version=latest
