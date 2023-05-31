@@ -102,8 +102,8 @@ if __name__ == '__main__':
     lexica = read_liwc(lexicon_path)
     matchers = get_matchers(lexica)
     documents = ['this is a document',
-                                        'this is another document',
-                                        'there are so many documents in here']
+                 'this is another document',
+                 'there are so many documents in here']
     for sent in documents:
         print(sent, match_sent(sent, matchers))
 
