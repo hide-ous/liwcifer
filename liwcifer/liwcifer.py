@@ -117,7 +117,7 @@ def extract_liwcs(document_df, lexica, content_field='text'):
     # print('test - row sums')
     # print(row_sums1)
 
-def get_matcher(lexica):
+def get_matchers(lexica):
     regexes_dict = dict()
     for lexicon_name, lexicon_list in sorted(lexica.items()):
         the_regex= lex_to_regex(lexicon_list)
@@ -128,18 +128,22 @@ def get_matcher(lexica):
     for lexicon_name, lexicon_re in sorted(regexes_dict.items()):
         the_regex= r'(?P<{}>{})'.format(lexicon_name, lexicon_re)
         regexes.append(the_regex)
-    return re.compile(r'|'.join(regexes), flags=re.I|re.M|re.U|re.DOTALL)
+    regexes.append(r'(?P<Tokens>\b\w+\b)')
+    return regexes
+    # return re.compile(r'|'.join(regexes), flags=re.I|re.M|re.U|re.DOTALL)
 
-def match_sent(sent: str, matcher:re.Pattern):
+def match_sent(sent: str, matchers):
     """
     returns a dictionary where the key is the name of the lexicon, and the value
     a list of the matching strings
     """
     to_return=defaultdict(list)
-    for match in re.finditer(matcher, sent):
-        for lex_name, matched_word in match.groupdict().items():
-            if matched_word is not None:
-                to_return[lex_name].append(matched_word)
+    for matcher in matchers:
+        for match in re.finditer(matcher, sent):
+            for lex_name, matched_word in match.groupdict().items():
+                if matched_word is not None:
+                    to_return[lex_name].append(matched_word)
+    print(to_return)
     return dict(to_return)
 
 def bag_of_lexicons(sent:str, matcher:re.Pattern):
@@ -151,14 +155,14 @@ def df_liwcifer(df:pd.DataFrame, text_col:str, matcher:re.Pattern):
 if __name__ == '__main__':
     lexicon_path = '../LIWC2015.jsonl'
     lexica = read_liwc(lexicon_path)
-    matcher = get_matcher(lexica)
+    matchers = get_matchers(lexica)
     # for sent in ['this is a document',
     #                                     'this is another document',
     #                                     'there are so many documents in here']:
-    #     print(sent, match_sent(sent, matcher))
+    #     print(sent, match_sent(sent, matchers))
     document_df = pd.DataFrame({'text':['this is a document',
                                         'this is another document',
                                         'there are so many documents in here']},
                                index=['a', 'b', 'c'])
-    print(df_liwcifer(document_df,'text', matcher))
+    print(df_liwcifer(document_df,'text', matchers))
     # extract_liwcs(document_df, lexica, content_field='text')
