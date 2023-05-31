@@ -1,6 +1,7 @@
 """Main module."""
 import re
 import json
+from functools import partial
 
 from sklearn.feature_extraction.text import CountVectorizer
 import pandas as pd
@@ -141,16 +142,23 @@ def match_sent(sent: str, matcher:re.Pattern):
                 to_return[lex_name].append(matched_word)
     return dict(to_return)
 
+def bag_of_lexicons(sent:str, matcher:re.Pattern):
+    return pd.Series({k: len(v) for k, v in match_sent(sent, matcher).items()})
+
+def df_liwcifer(df:pd.DataFrame, text_col:str, matcher:re.Pattern):
+    return df[text_col].apply(partial(bag_of_lexicons, matcher=matcher)).fillna(0)
 
 if __name__ == '__main__':
     lexicon_path = '../LIWC2015.jsonl'
-    document_df = pd.DataFrame({'text':['this is a document',
-                                        'this is another document',
-                                        'there are so many documents in here']})
     lexica = read_liwc(lexicon_path)
     matcher = get_matcher(lexica)
-    for sent in ['this is a document',
+    # for sent in ['this is a document',
+    #                                     'this is another document',
+    #                                     'there are so many documents in here']:
+    #     print(sent, match_sent(sent, matcher))
+    document_df = pd.DataFrame({'text':['this is a document',
                                         'this is another document',
-                                        'there are so many documents in here']:
-        print(sent, match_sent(sent, matcher))
+                                        'there are so many documents in here']},
+                               index=['a', 'b', 'c'])
+    print(df_liwcifer(document_df,'text', matcher))
     # extract_liwcs(document_df, lexica, content_field='text')
