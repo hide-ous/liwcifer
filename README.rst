@@ -18,7 +18,7 @@ LIWCifer
 
 
 
-extract liwc features from text
+Extract LIWC features from text in python
 
 
 * Free software: MIT license
