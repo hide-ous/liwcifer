@@ -105,3 +105,5 @@ ENV/
 .vscode/
 .idea/
 /LIWC2015.jsonl
+/LIWC2015_English_OK.dic
+/LIWC2007_English100131.dic

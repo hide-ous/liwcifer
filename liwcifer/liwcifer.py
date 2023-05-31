@@ -1,4 +1,5 @@
 """Main module."""
+import os.path
 import re
 import json
 from functools import partial
@@ -8,10 +9,38 @@ import pandas as pd
 import numpy as np
 from collections import defaultdict
 
-def read_liwc(lexicon_path='LIWC2015.jsonl'):
-    with open(lexicon_path, 'r') as f:
-        return json.load(f)
 
+def read_dic(lexicon_path='LIWC2015.dic'):
+    indices_to_categories = dict()
+
+    with open(lexicon_path, encoding='utf8') as f:
+        contents = f.read()
+
+    _, categories_text, words_text = contents.split('%')
+    for cat_line in categories_text.strip().split('\n'):
+        idx, cat = cat_line.split('\t')
+        indices_to_categories[idx.strip()]=cat.strip()
+
+    categories_to_words = {cat:list() for cat in indices_to_categories.values()}
+    for word_line in words_text.strip().split('\n'):
+        words = word_line.split('\t')
+        word, cats = words[0], list(map(lambda x:indices_to_categories[x.strip()], words[1:]))
+        for cat in cats:
+            categories_to_words[cat].append(word.lower())
+    return categories_to_words
+
+def read_json(lexicon_path='LIWC2015.jsonl'):
+    with open(lexicon_path, 'r') as f:
+        return {k.lower():v for k, v in json.load(f).items()}
+
+def read_liwc(lexicon_path='LIWC2015.jsonl'):
+    _, ext = os.path.splitext(lexicon_path)
+    if ext in {'.json', '.jsonl'}:
+        return read_json(lexicon_path)
+    elif ext =='.dic':
+        return read_dic(lexicon_path)
+    else:
+        raise ValueError(f'Unsupported file extension: {ext}')
 def create_matchings(vocabulary_words, lexica):
     #cv = CountVectorizer(input='file', max_df=.5, lowercase=True)
     #data_sample = open(comments_path)
@@ -56,7 +85,9 @@ def lex_to_regex(lexicon_list):
     for term in lexicon_list:
         term = term.replace("*",".*")
         if '(discrep' in term:
-            term = term.replace('(discrep)', '(?P=Discrep)')
+            term = term.replace('(discrep)', '(?P=discrep)')
+        elif '(53' in term:
+            term = term.replace('(53)', '(?P=53)')
         elif ('(' in term) and (')' in term):
             term = term.replace('(', '(?:')
 
@@ -121,15 +152,19 @@ def get_matchers(lexica):
     regexes_dict = dict()
     for lexicon_name, lexicon_list in sorted(lexica.items()):
         the_regex= lex_to_regex(lexicon_list)
-        regexes_dict[lexicon_name] = the_regex
-    regexes_dict['Posemo']=regexes_dict['Posemo'].replace('?P=Discrep', regexes_dict['Discrep'])
+        regexes_dict[lexicon_name.lower()] = the_regex
+    if '?P=discrep' in regexes_dict['posemo']:
+        regexes_dict['posemo']=regexes_dict['posemo'].replace('?P=discrep', regexes_dict['discrep'])
     #TODO: there is a (53) group before a "like"; investigate what it means. is that the index of a LIWC category?
+    if '?P=53' in regexes_dict['affect']:
+        regexes_dict['affect']=regexes_dict['affect'].replace('?P=53', regexes_dict['reward'])
     regexes =list()
     for lexicon_name, lexicon_re in sorted(regexes_dict.items()):
         the_regex= r'(?P<{}>{})'.format(lexicon_name, lexicon_re)
         regexes.append(the_regex)
-    regexes.append(r'(?P<Tokens>\b\w+\b)')
+    regexes.append(r'(?P<tokens>\b\w+\b)')
     return regexes
+    # return [re.compile(regex, flags=re.I|re.M|re.U|re.DOTALL) for regex in regexes]
     # return re.compile(r'|'.join(regexes), flags=re.I|re.M|re.U|re.DOTALL)
 
 def match_sent(sent: str, matchers):
@@ -139,21 +174,20 @@ def match_sent(sent: str, matchers):
     """
     to_return=defaultdict(list)
     for matcher in matchers:
-        for match in re.finditer(matcher, sent):
+        for match in re.finditer(matcher, sent, flags=re.I):
             for lex_name, matched_word in match.groupdict().items():
                 if matched_word is not None:
                     to_return[lex_name].append(matched_word)
-    print(to_return)
     return dict(to_return)
 
-def bag_of_lexicons(sent:str, matcher:re.Pattern):
-    return pd.Series({k: len(v) for k, v in match_sent(sent, matcher).items()})
+def bag_of_lexicons(sent:str, matchers):
+    return pd.Series({k: len(v) for k, v in match_sent(sent, matchers).items()})
 
-def df_liwcifer(df:pd.DataFrame, text_col:str, matcher:re.Pattern):
-    return df[text_col].apply(partial(bag_of_lexicons, matcher=matcher)).fillna(0)
+def df_liwcifer(df:pd.DataFrame, text_col:str, matchers):
+    return df[text_col].apply(partial(bag_of_lexicons, matchers=matchers)).fillna(0)
 
 if __name__ == '__main__':
-    lexicon_path = '../LIWC2015.jsonl'
+    lexicon_path = '../LIWC2007_English100131.dic'
     lexica = read_liwc(lexicon_path)
     matchers = get_matchers(lexica)
     # for sent in ['this is a document',
@@ -165,4 +199,3 @@ if __name__ == '__main__':
                                         'there are so many documents in here']},
                                index=['a', 'b', 'c'])
     print(df_liwcifer(document_df,'text', matchers))
-    # extract_liwcs(document_df, lexica, content_field='text')
