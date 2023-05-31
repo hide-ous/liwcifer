@@ -10,7 +10,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = [ ]
+requirements = [ 'pandas~=2.0.2']
 
 test_requirements = [ ]
 
@@ -38,7 +38,7 @@ setup(
     license="MIT license",
     long_description=readme + '\n\n' + history,
     include_package_data=True,
-    keywords='liwcifer',
+    keywords=['liwcifer', 'liwc', 'wc'],
     name='liwcifer',
     packages=find_packages(include=['liwcifer', 'liwcifer.*']),
     test_suite='tests',

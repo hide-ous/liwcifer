@@ -112,7 +112,7 @@ if __name__ == '__main__':
     for sent in documents:
         print(sent, bag_of_lexicons(sent, matchers))
 
-    print('\nexracting word counts from a pandas DataFrame')
+    print('\nextracting word counts from a pandas DataFrame')
     document_df = pd.DataFrame({'text':documents},
                                index=['a', 'b', 'c'])
     print(df_liwcifer(document_df,'text', matchers))
