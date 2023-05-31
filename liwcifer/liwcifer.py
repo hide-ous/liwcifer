@@ -4,9 +4,7 @@ import re
 import json
 from functools import partial
 
-from sklearn.feature_extraction.text import CountVectorizer
 import pandas as pd
-import numpy as np
 from collections import defaultdict
 
 
@@ -92,10 +90,12 @@ def match_sent(sent: str, matchers):
     return dict(to_return)
 
 def bag_of_lexicons(sent:str, matchers):
-    return pd.Series({k: len(v) for k, v in match_sent(sent, matchers).items()})
+    return {k: len(v) for k, v in match_sent(sent, matchers).items()}
+def bag_of_lexicons_as_series(sent:str, matchers):
+    return pd.Series(bag_of_lexicons(sent, matchers))
 
 def df_liwcifer(df:pd.DataFrame, text_col:str, matchers):
-    return df[text_col].apply(partial(bag_of_lexicons, matchers=matchers)).fillna(0)
+    return df[text_col].apply(partial(bag_of_lexicons_as_series, matchers=matchers)).fillna(0)
 
 if __name__ == '__main__':
     lexicon_path = '../LIWC2015_English_OK.dic'
@@ -104,9 +104,15 @@ if __name__ == '__main__':
     documents = ['this is a document',
                  'this is another document',
                  'there are so many documents in here']
+    print('finding tokens that match with LIWC')
     for sent in documents:
         print(sent, match_sent(sent, matchers))
 
+    print('\nextracting word counts')
+    for sent in documents:
+        print(sent, bag_of_lexicons(sent, matchers))
+
+    print('\nexracting word counts from a pandas DataFrame')
     document_df = pd.DataFrame({'text':documents},
                                index=['a', 'b', 'c'])
     print(df_liwcifer(document_df,'text', matchers))
