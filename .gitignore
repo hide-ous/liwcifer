@@ -104,3 +104,4 @@ ENV/
 # IDE settings
 .vscode/
 .idea/
+/LIWC2015.jsonl
