@@ -42,7 +42,8 @@ def read_liwc(lexicon_path='LIWC2015.jsonl'):
 
 def lex_to_regex(lexicon_list):
 
-    regex = ''
+    # regex = r''
+    terms = list()
     for term in lexicon_list:
         term = term.replace("*",".*")
         if '(discrep' in term:
@@ -54,8 +55,10 @@ def lex_to_regex(lexicon_list):
         else:
             term = term.replace(")",r"[)]")
             term = term.replace("(", r"[(]")
-        regex = regex + r'|\b'+ term + r'\b'
-    regex = regex.removeprefix('|')
+        terms.append(r'\b{}\b'.format(term))
+        # regex = regex + r'|\b'+ term + r'\b'
+    # regex = regex.removeprefix('|')
+    regex=r'|'.join(terms)
     raw_s = r'{}'.format(regex)
     return raw_s
 
