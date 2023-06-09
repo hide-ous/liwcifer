@@ -1,4 +1,5 @@
 """Main module."""
+import numpy as np
 import os.path
 import re
 import json
@@ -95,7 +96,7 @@ def match_sent(sent: str, matchers):
 def bag_of_lexicons(sent:str, matchers):
     return {k: len(v) for k, v in match_sent(sent, matchers).items()}
 def bag_of_lexicons_as_series(sent:str, matchers):
-    return pd.Series(bag_of_lexicons(sent, matchers))
+    return pd.Series(bag_of_lexicons(sent, matchers), dtype=np.int)
 
 def df_liwcifer(df:pd.DataFrame, text_col:str, matchers):
     return df[text_col].apply(partial(bag_of_lexicons_as_series, matchers=matchers)).fillna(0)
